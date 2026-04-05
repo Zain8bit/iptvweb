@@ -1,0 +1,144 @@
+<html>
+        <head><title>Downloaded HTML</title></head>
+        <body>
+            <pre style="white-space: pre-wrap; word-wrap: break-word;"><!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal IPTV Player</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.10/hls.min.js"></script>
+    <style>
+        body { background: #000; color: #fff; font-family: sans-serif; margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; }
+        
+        /* Layout Default (Mobile First) */
+        .app-container { display: flex; flex-direction: column; height: 100vh; }
+        .video-section { flex: 0 0 30vh; background: #000; position: sticky; top: 0; z-index: 10; }
+        .list-section { flex: 1; overflow-y: auto; background: #111; padding-bottom: 80px; }
+
+        /* Layout untuk Layar Lebar (TV / Tablet / Laptop) */
+        @media (min-width: 768px) {
+            .app-container { flex-direction: row; }
+            .video-section { flex: 1; height: 100vh; order: 2; }
+            .list-section { width: 320px; height: 100vh; order: 1; border-right: 1px solid #333; }
+        }
+
+        video { width: 100%; height: 100%; object-fit: contain; background: #000; }
+        .channel-btn { width: 100%; padding: 15px; text-align: left; border-bottom: 1px solid #222; font-size: 14px; transition: 0.2s; }
+        .channel-btn:focus, .channel-btn:active { background: #fbbf24; color: #000; outline: none; }
+        
+        /* Tombol melayang untuk Mobile agar tidak menutupi list */
+        .fab { position: fixed; bottom: 20px; right: 20px; z-index: 20; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="video-section shadow-xl">
+        <video id="video" controls playsinline poster="https://via.placeholder.com/800x450/000/fff?text=Pilih+Channel"></video>
+        <div class="p-2 bg-zinc-900 text-xs truncate" id="info-text">Silahkan muat playlist...</div>
+    </div>
+
+    <div class="list-section" id="channel-list">
+        <div class="p-10 text-center text-zinc-500">
+            <p>Belum ada channel.</p>
+            <p class="text-[10px] mt-2">Klik tombol "+" untuk menambah link M3U</p>
+        </div>
+    </div>
+</div>
+
+<button onclick="document.getElementById('modal').classList.toggle('hidden')" 
+        class="fab bg-blue-600 hover:bg-blue-500 w-14 h-14 rounded-full shadow-2xl text-white text-2xl font-bold">
+    +
+</button>
+
+<div id="modal" class="fixed inset-0 bg-black/90 flex items-center justify-center p-5 z-50 hidden">
+    <div class="bg-zinc-800 p-6 rounded-2xl w-full max-w-sm">
+        <h3 class="text-lg font-bold mb-4">Tambah M3U</h3>
+        <input id="input-url" type="text" placeholder="Paste Link M3U di sini" 
+               class="w-full p-3 bg-black border border-zinc-700 rounded-lg mb-4 text-sm text-white focus:border-blue-500 outline-none">
+        <div class="text-center text-zinc-500 text-xs mb-4">ATAU UPLOAD FILE</div>
+        <input id="input-file" type="file" accept=".m3u" class="text-sm mb-6 w-full">
+        
+        <div class="flex gap-2">
+            <button onclick="handleLoad()" class="flex-1 bg-yellow-500 text-black py-3 rounded-xl font-bold">MUAT</button>
+            <button onclick="document.getElementById('modal').classList.add('hidden')" class="px-4 bg-zinc-700 py-3 rounded-xl">BATAL</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let hls = new Hls();
+    const video = document.getElementById('video');
+    const info = document.getElementById('info-text');
+
+    function playChannel(url, title) {
+        info.innerText = "Memutar: " + title;
+        if (Hls.isSupported()) {
+            hls.destroy();
+            hls = new Hls();
+            hls.loadSource(url);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = url;
+            video.play();
+        }
+    }
+
+    async function handleLoad() {
+        const url = document.getElementById('input-url').value;
+        const file = document.getElementById('input-file').files[0];
+        let rawData = "";
+
+        try {
+            if (url) {
+                const res = await fetch(url);
+                rawData = await res.text();
+            } else if (file) {
+                rawData = await file.text();
+            }
+            
+            if (rawData) {
+                parseM3U(rawData);
+                document.getElementById('modal').classList.add('hidden');
+            }
+        } catch (err) {
+            alert("Error: Pastikan link benar atau coba upload file M3U langsung.");
+        }
+    }
+
+    function parseM3U(text) {
+        const lines = text.split(/\r?\n/);
+        const list = document.getElementById('channel-list');
+        list.innerHTML = ""; 
+        
+        let currentTitle = "";
+        lines.forEach(line => {
+            line = line.trim();
+            if (line.startsWith("#EXTINF:")) {
+                currentTitle = line.split(',').pop();
+            } else if (line.startsWith("http")) {
+                const channelUrl = line;
+                const channelName = currentTitle || "Channel";
+                
+                const btn = document.createElement('button');
+                btn.className = "channel-btn";
+                btn.innerText = channelName;
+                btn.onclick = () => {
+                    playChannel(channelUrl, channelName);
+                    if(window.innerWidth < 768) window.scrollTo(0,0); // Scroll ke atas kalau di HP
+                };
+                list.appendChild(btn);
+                currentTitle = "";
+            }
+        });
+    }
+</script>
+
+</body>
+</html>
+</pre>
+        </body>
+    </html>
