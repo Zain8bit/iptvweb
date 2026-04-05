@@ -3,137 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IPTV Coolita - Fixed Scroll</title>
+    <title>Coolita Live TV Replica</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.10/hls.min.js"></script>
     <style>
-        /* Mengunci layar utama agar tidak ada scroll body */
-        html, body { 
-            height: 100%; 
-            margin: 0; 
-            padding: 0; 
-            overflow: hidden; 
-            background: #000; 
-            color: #fff; 
-            font-family: sans-serif; 
-        }
+        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; background: #000; color: #fff; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        
+        .app-container { display: flex; height: 100vh; width: 100vw; flex-direction: column; }
 
-        .app-container { 
-            display: flex; 
-            height: 100vh; 
-            width: 100vw; 
-            flex-direction: column; 
-        }
-
-        /* Area Video Tetap di Atas (Mobile) atau Kanan (TV) */
-        .video-box { 
-            flex: 0 0 35%; 
-            background: #000; 
-            display: flex; 
-            flex-direction: column;
-        }
+        /* AREA VIDEO (Kiri di Desktop) */
+        .video-section { flex: 1; background: #000; display: flex; flex-direction: column; position: relative; }
         video { width: 100%; height: 100%; object-fit: contain; }
 
-        /* Area Navigasi & List */
-        .content-box { 
-            flex: 1; 
+        /* SIDEBAR (Kanan di Desktop) */
+        .sidebar { 
+            flex: 0 0 350px; 
+            background: #0a0a0a; 
             display: flex; 
             flex-direction: column; 
-            background: #111; 
-            overflow: hidden; /* Penting: Mengunci container utama */
+            border-left: 1px solid #222;
         }
 
-        /* Header Statis (Search & Group) - Tidak Ikut Scroll */
-        .header-controls { 
-            padding: 10px; 
-            background: #1a1a1a; 
-            border-bottom: 2px solid #333;
-            z-index: 10;
-        }
-
+        /* Navigasi Header Sidebar */
+        .sidebar-header { padding: 15px; background: #111; border-bottom: 1px solid #222; }
+        .sidebar-header h2 { color: #fbbf24; font-weight: 800; font-size: 1.2rem; margin-bottom: 10px; letter-spacing: -0.5px; }
+        
         input, select { 
-            width: 100%; 
-            padding: 12px; 
-            background: #000; 
-            border: 2px solid #444; 
-            border-radius: 8px; 
-            color: #fff; 
-            font-size: 14px; 
-            margin-bottom: 8px; 
-            outline: none;
+            width: 100%; padding: 10px; background: #1a1a1a; border: 1px solid #333; 
+            border-radius: 4px; color: #fff; font-size: 13px; margin-bottom: 8px; outline: none;
+        }
+        input:focus, select:focus { border-color: #fbbf24; }
+
+        /* Daftar Channel */
+        .channel-container { flex: 1; overflow-y: auto; padding: 5px; }
+        .channel-item { 
+            width: 100%; display: flex; align-items: center; padding: 12px 15px; 
+            margin-bottom: 2px; background: transparent; transition: 0.2s; 
+            border-bottom: 1px solid #111; text-align: left;
+        }
+        .channel-item:focus, .channel-item:hover { background: #1a1a1a; outline: none; border-left: 4px solid #fbbf24; }
+        
+        .ch-number { color: #fbbf24; font-weight: bold; margin-right: 15px; min-width: 30px; font-size: 14px; }
+        .ch-info { flex: 1; overflow: hidden; }
+        .ch-name { display: block; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ch-group { display: block; font-size: 10px; color: #666; text-transform: uppercase; }
+
+        /* Info Bar di bawah Video */
+        .info-bar { padding: 15px; background: linear-gradient(to right, #0a0a0a, #000); border-top: 1px solid #222; }
+
+        /* Responsivitas untuk Mobile (Tumpuk Vertikal) */
+        @media (max-width: 767px) {
+            .app-container { flex-direction: column; }
+            .sidebar { flex: 1; width: 100%; border-left: none; border-top: 1px solid #222; }
+            .video-section { flex: 0 0 30vh; }
         }
         
-        /* Highlight saat Remote TV memilih input */
-        input:focus, select:focus { border-color: #fbbf24; background: #222; }
-
-        /* AREA SCROLL KHUSUS DAFTAR CHANNEL */
-        .scrollable-list { 
-            flex: 1; 
-            overflow-y: auto; 
-            padding: 10px;
-            -webkit-overflow-scrolling: touch; /* Halus di mobile */
-        }
-
-        .ch-btn { 
-            width: 100%; 
-            text-align: left; 
-            padding: 15px; 
-            margin-bottom: 6px; 
-            background: #1a1a1a; 
-            border-radius: 8px; 
-            font-size: 14px; 
-            border: 2px solid transparent; 
-            display: flex; 
-            justify-content: space-between;
-        }
-
-        /* Efek fokus remote TV agar bisa scroll ke atas/bawah otomatis */
-        .ch-btn:focus { 
-            border-color: #fbbf24; 
-            background: #333; 
-            outline: none; 
-            transform: scale(1.01);
-        }
-
-        .ch-tag { font-size: 9px; color: #fbbf24; border: 1px solid #444; padding: 2px 6px; border-radius: 4px; }
-
-        /* Layout TV (Layar Lebar) */
+        /* Layout Desktop (Mirip livetv.coolita.com) */
         @media (min-width: 768px) {
             .app-container { flex-direction: row; }
-            .video-box { flex: 1; height: 100vh; order: 2; }
-            .content-box { width: 380px; height: 100vh; order: 1; border-right: 2px solid #333; }
         }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <div class="video-box">
-        <video id="video-player" controls autoplay playsinline></video>
-        <div id="playing-info" class="p-2 text-[10px] bg-zinc-900 truncate italic text-gray-400">Pilih siaran...</div>
+    <div class="video-section">
+        <video id="main-video" controls autoplay playsinline></video>
+        <div class="info-bar">
+            <h1 id="now-playing-title" class="text-xl font-bold text-white">Selamat Datang</h1>
+            <p id="now-playing-info" class="text-xs text-gray-500 uppercase tracking-widest">Pilih Channel di Menu Sebelah Kanan</p>
+        </div>
     </div>
 
-    <div class="content-box">
-        <div class="header-controls">
-            <select id="group-select" onchange="filterChannels()">
-                <option value="all">-- SEMUA KATEGORI --</option>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>LIVE TV <span class="font-light text-white italic">OS</span></h2>
+            <select id="group-filter" onchange="filterList()">
+                <option value="all">SEMUA KATEGORI</option>
             </select>
-            <input id="search-input" type="text" placeholder="🔍 Cari Nama Channel..." onkeyup="filterChannels()">
+            <input id="search-box" type="text" placeholder="Cari Nama Channel..." onkeyup="filterList()">
         </div>
-        
-        <div id="list-container" class="scrollable-list">
-            <div class="p-10 text-center text-gray-600 italic text-sm">Memuat channel...</div>
+
+        <div id="channel-list" class="channel-container">
+            <div class="p-10 text-center text-gray-700 text-sm italic">Memuat Siaran...</div>
         </div>
     </div>
 </div>
 
 <script>
-    const video = document.getElementById('video-player');
-    const listContainer = document.getElementById('list-container');
-    const searchInput = document.getElementById('search-input');
-    const groupSelect = document.getElementById('group-select');
-    const info = document.getElementById('playing-info');
-    
+    const video = document.getElementById('main-video');
+    const listContainer = document.getElementById('channel-list');
+    const searchBox = document.getElementById('search-box');
+    const groupFilter = document.getElementById('group-filter');
+    const playingTitle = document.getElementById('now-playing-title');
+    const playingInfo = document.getElementById('now-playing-info');
+
     const sources = [
         "https://iptv-org.github.io/iptv/languages/ind.m3u",
         "https://iptv-org.github.io/iptv/languages/jpn.m3u",
@@ -141,93 +109,88 @@
     ];
 
     let allChannels = [];
-    let allGroups = new Set();
     let hls = new Hls();
 
-    window.onload = loadAllSources;
-
-    async function loadAllSources() {
+    window.onload = async () => {
         for (const url of sources) {
             try {
                 const res = await fetch(url);
                 const data = await res.text();
                 const parsed = parseM3U(data);
                 allChannels = [...allChannels, ...parsed];
-                renderGroups();
+                updateGroups();
                 renderChannels(allChannels);
-            } catch (e) { console.error("Gagal load: " + url); }
+            } catch (e) { console.error("Gagal muat sumber."); }
         }
-    }
+    };
 
     function parseM3U(text) {
         const lines = text.split(/\r?\n/);
         const channels = [];
-        let currentInfo = {};
-
+        let current = {};
         lines.forEach(line => {
             line = line.trim();
             if (line.startsWith("#EXTINF:")) {
                 const name = line.split(',').pop();
                 const groupMatch = line.match(/group-title="([^"]+)"/);
-                const group = groupMatch ? groupMatch[1] : "LAINNYA";
-                currentInfo = { name, group };
-                allGroups.add(group);
+                current = { name, group: groupMatch ? groupMatch[1] : "LAINNYA" };
             } else if (line.startsWith("http")) {
-                channels.push({ ...currentInfo, url: line });
-                currentInfo = {};
+                channels.push({ ...current, url: line });
             }
         });
         return channels;
     }
 
-    function renderGroups() {
-        const currentSelection = groupSelect.value;
-        const sortedGroups = Array.from(allGroups).sort();
-        groupSelect.innerHTML = '<option value="all">-- SEMUA KATEGORI --</option>';
-        sortedGroups.forEach(group => {
+    function updateGroups() {
+        const groups = [...new Set(allChannels.map(c => c.group))].sort();
+        const current = groupFilter.value;
+        groupFilter.innerHTML = '<option value="all">SEMUA KATEGORI</option>';
+        groups.forEach(g => {
             const opt = document.createElement('option');
-            opt.value = group;
-            opt.innerText = group;
-            groupSelect.appendChild(opt);
+            opt.value = g; opt.innerText = g;
+            groupFilter.appendChild(opt);
         });
-        groupSelect.value = currentSelection;
+        groupFilter.value = current;
     }
 
     function renderChannels(channels) {
         listContainer.innerHTML = "";
-        channels.forEach(ch => {
+        channels.forEach((ch, index) => {
             const btn = document.createElement('button');
-            btn.className = "ch-btn";
-            btn.innerHTML = `<span>${ch.name}</span><span class="ch-tag">${ch.group}</span>`;
-            btn.onclick = () => playStream(ch.url, ch.name);
+            btn.className = "channel-item";
+            btn.innerHTML = `
+                <div class="ch-number">${String(index + 1).padStart(2, '0')}</div>
+                <div class="ch-info">
+                    <span class="ch-name">${ch.name}</span>
+                    <span class="ch-group">${ch.group}</span>
+                </div>
+            `;
+            btn.onclick = () => playStream(ch.url, ch.name, ch.group);
             listContainer.appendChild(btn);
         });
     }
 
-    function filterChannels() {
-        const query = searchInput.value.toLowerCase();
-        const selectedGroup = groupSelect.value;
-
+    function filterList() {
+        const query = searchBox.value.toLowerCase();
+        const group = groupFilter.value;
         const filtered = allChannels.filter(ch => {
-            const matchName = ch.name.toLowerCase().includes(query);
-            const matchGroup = selectedGroup === "all" || ch.group === selectedGroup;
-            return matchName && matchGroup;
+            const mName = ch.name.toLowerCase().includes(query);
+            const mGroup = group === "all" || ch.group === group;
+            return mName && mGroup;
         });
         renderChannels(filtered);
     }
 
-    function playStream(url, title) {
-        info.innerText = "📺 Memutar: " + title;
+    function playStream(url, title, group) {
+        playingTitle.innerText = title;
+        playingInfo.innerText = "Kategori: " + group;
+        
         if (Hls.isSupported()) {
             hls.destroy();
             hls = new Hls();
             hls.loadSource(url);
             hls.attachMedia(video);
-            hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                video.play();
-                // Scroll otomatis ke atas agar video terlihat di mobile saat diklik
-                if(window.innerWidth < 768) window.scrollTo({top: 0, behavior: 'smooth'});
-            });
+            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
             video.src = url;
             video.play();
