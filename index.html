@@ -77,3 +77,88 @@
                 const data = await res.text();
                 const parsed = parseM3U(data);
                 allChannels = [...allChannels, ...parsed];
+                renderGroups();
+                renderChannels(allChannels);
+            } catch (e) { console.error("Gagal: " + url); }
+        }
+        status.innerText = "Total: " + allChannels.length + " channel dimuat.";
+    }
+
+    function parseM3U(text) {
+        const lines = text.split(/\r?\n/);
+        const channels = [];
+        let currentInfo = {};
+
+        lines.forEach(line => {
+            line = line.trim();
+            if (line.startsWith("#EXTINF:")) {
+                // Ambil Nama
+                const name = line.split(',').pop();
+                // Cari group-title menggunakan Regex
+                const groupMatch = line.match(/group-title="([^"]+)"/);
+                const group = groupMatch ? groupMatch[1] : "Lainnya";
+                
+                currentInfo = { name, group };
+                allGroups.add(group);
+            } else if (line.startsWith("http")) {
+                channels.push({ ...currentInfo, url: line });
+                currentInfo = {};
+            }
+        });
+        return channels;
+    }
+
+    function renderGroups() {
+        const sortedGroups = Array.from(allGroups).sort();
+        // Reset dropdown tapi simpan opsi "Semua"
+        groupSelect.innerHTML = '<option value="all">-- SEMUA KELOMPOK --</option>';
+        sortedGroups.forEach(group => {
+            const opt = document.createElement('option');
+            opt.value = group;
+            opt.innerText = group;
+            groupSelect.appendChild(opt);
+        });
+    }
+
+    function renderChannels(channels) {
+        listContainer.innerHTML = "";
+        channels.forEach(ch => {
+            const btn = document.createElement('button');
+            btn.className = "ch-btn";
+            btn.innerHTML = `
+                <span>${ch.name}</span>
+                <span class="ch-group-tag">${ch.group}</span>
+            `;
+            btn.onclick = () => playStream(ch.url, ch.name);
+            listContainer.appendChild(btn);
+        });
+    }
+
+    function filterChannels() {
+        const query = searchInput.value.toLowerCase();
+        const selectedGroup = groupSelect.value;
+
+        const filtered = allChannels.filter(ch => {
+            const matchName = ch.name.toLowerCase().includes(query);
+            const matchGroup = selectedGroup === "all" || ch.group === selectedGroup;
+            return matchName && matchGroup;
+        });
+        renderChannels(filtered);
+    }
+
+    function playStream(url, title) {
+        status.innerText = "Memutar: " + title;
+        if (Hls.isSupported()) {
+            hls.destroy();
+            hls = new Hls();
+            hls.loadSource(url);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = url;
+            video.play();
+        }
+    }
+</script>
+</body>
+</html>
